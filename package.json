@@ -1,0 +1,40 @@
+{
+    "name": "@scrypted/securitysystem",
+    "version": "0.0.1",
+    "description": "Security System Plugin for Scrypted",
+    "author": "Scrypted",
+    "license": "Apache",
+    "scripts": {
+        "prepublishOnly": "NODE_ENV=production scrypted-webpack",
+        "prescrypted-vscode-launch": "scrypted-webpack",
+        "scrypted-vscode-launch": "scrypted-deploy-debug",
+        "scrypted-deploy-debug": "scrypted-deploy-debug",
+        "scrypted-debug": "scrypted-debug",
+        "scrypted-deploy": "scrypted-deploy",
+        "scrypted-readme": "scrypted-readme",
+        "scrypted-package-json": "scrypted-package-json",
+        "scrypted-webpack": "scrypted-webpack"
+    },
+    "keywords": [
+        "system",
+        "security",
+        "scrypted",
+        "plugin"
+    ],
+    "scrypted": {
+        "name": "Security System",
+        "type": "SecuritySystem",
+        "interfaces": [
+            "SecuritySystem",
+            "Settings"
+        ]
+    },
+    "devDependencies": {
+        "@scrypted/sdk": "^0.0.196",
+        "@types/node": "^16.7.1",
+        "webpack-bundle-analyzer": "^4.5.0"
+    },
+    "dependencies": {
+        "terser": "^3.14.1"
+    }
+}
