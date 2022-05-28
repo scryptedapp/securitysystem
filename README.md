@@ -1,4 +1,4 @@
-# An Security System plugin
+# A Security System plugin for Scrypted
 
 ## npm commands
  * npm run scrypted-webpack

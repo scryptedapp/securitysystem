@@ -95,7 +95,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
       {
         title: "Home Devices",
         description: "Door sensors, window sensors, garage doors. Also used for night mode.",
-        value: this.storage.getItem("home_devices").split(","),
+        value: this.storage.getItem("home_devices") ? this.storage.getItem("home_devices").split(",") : "",
         key: "home_devices",
         type: "device",
         multiple: true,
@@ -104,7 +104,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
       {
         title: "Away Devices",
         description: "Motion sensors",
-        value: this.storage.getItem("away_devices").split(","),
+        value: this.storage.getItem("away_devices") ? this.storage.getItem("away_devices").split(",") : "",
         key: "away_devices",
         type: "device",
         multiple: true,
