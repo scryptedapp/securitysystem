@@ -1,6 +1,6 @@
 {
     "name": "@scrypted/securitysystem",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Security System Plugin for Scrypted",
     "author": "Scrypted",
     "license": "Apache",
