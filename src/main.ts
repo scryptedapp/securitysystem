@@ -16,14 +16,19 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
     this.securitySystemState = {
       mode: SecuritySystemMode.Disarmed,
       triggered: false,
-      supportedModes: [
-        SecuritySystemMode.AwayArmed,
-        SecuritySystemMode.HomeArmed,
-        SecuritySystemMode.NightArmed,
-        SecuritySystemMode.Disarmed
-      ]
+      supportedModes: this.getSupportedModes(),
     }
     this.listeners = [];
+  }
+
+  getSupportedModes(): Array<SecuritySystemMode> {
+    let modes = [SecuritySystemMode.Disarmed];
+
+    if (this.storage.getItem("home_devices")) modes.push(SecuritySystemMode.HomeArmed)
+    if (this.storage.getItem("away_devices")) modes.push(SecuritySystemMode.AwayArmed)
+    if (this.storage.getItem("night_devices")) modes.push(SecuritySystemMode.NightArmed)
+
+    return modes;
   }
 
   async armSecuritySystem(mode: SecuritySystemMode): Promise<void> {
@@ -44,7 +49,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
         monitoredDeviceIds = this.storage.getItem("away_devices").split(",");
         break;
       case SecuritySystemMode.NightArmed:
-        monitoredDeviceIds = this.storage.getItem("home_devices").split(",");
+        monitoredDeviceIds = this.storage.getItem("night_devices").split(",");
         break;
       default:
         return;
@@ -93,8 +98,8 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
   async getSettings(): Promise<Setting[]> {
     return [
       {
-        title: "Home Devices",
-        description: "Door sensors, window sensors, garage doors. Also used for night mode.",
+        title: "Home Mode Devices",
+        description: "Devices that will trigger the alarm in 'home' mode.",
         value: this.storage.getItem("home_devices") ? this.storage.getItem("home_devices").split(",") : "",
         key: "home_devices",
         type: "device",
@@ -102,10 +107,19 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
         deviceFilter: `type === '${ScryptedDeviceType.Sensor}'`
       },
       {
-        title: "Away Devices",
-        description: "Motion sensors",
+        title: "Away Mode Devices",
+        description: "Devices that will trigger the alarm in 'away' mode.",
         value: this.storage.getItem("away_devices") ? this.storage.getItem("away_devices").split(",") : "",
         key: "away_devices",
+        type: "device",
+        multiple: true,
+        deviceFilter: `type === '${ScryptedDeviceType.Sensor}'`
+      },
+      {
+        title: "Night Mode Devices",
+        description: "Devices that will trigger the alarm in 'night' mode.",
+        value: this.storage.getItem("night_devices") ? this.storage.getItem("night_devices").split(",") : "",
+        key: "night_devices",
         type: "device",
         multiple: true,
         deviceFilter: `type === '${ScryptedDeviceType.Sensor}'`
@@ -114,6 +128,12 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
   }
 
   async putSetting(key: string, value: string): Promise<void> {
+    if (key.includes("_devices")) {
+      this.securitySystemState = Object.assign(this.securitySystemState, {
+        supportedModes: this.getSupportedModes(),
+      })
+      this.console.log(`Updated supported modes`);
+    }
     this.storage.setItem(key, value.toString());
   }
 
