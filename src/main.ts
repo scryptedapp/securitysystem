@@ -24,9 +24,9 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
   getSupportedModes(): Array<SecuritySystemMode> {
     let modes = [SecuritySystemMode.Disarmed];
 
-    if (this.storage.getItem("home_devices")) modes.push(SecuritySystemMode.HomeArmed)
-    if (this.storage.getItem("away_devices")) modes.push(SecuritySystemMode.AwayArmed)
-    if (this.storage.getItem("night_devices")) modes.push(SecuritySystemMode.NightArmed)
+    if (this.storage.getItem("home_devices").length > 0) modes.push(SecuritySystemMode.HomeArmed)
+    if (this.storage.getItem("away_devices").length > 0) modes.push(SecuritySystemMode.AwayArmed)
+    if (this.storage.getItem("night_devices").length > 0) modes.push(SecuritySystemMode.NightArmed)
 
     return modes;
   }
