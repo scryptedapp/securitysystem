@@ -56,13 +56,13 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
     }
 
     // Establish listeners for supported interfaces on monitored devices
+    this.removeListeners();
     monitoredDeviceIds.forEach((deviceId) => {
       const device = systemManager.getDeviceById(deviceId);
       device.interfaces.forEach((intf) => {
         if (supportedInterfaces.includes(intf as ScryptedInterface)) {
           this.listeners.push(device.listen({event: intf}, (eventSource: ScryptedDevice | undefined, eventDetails: EventDetails, eventData: any) => {
-            this.console.log("Heard event");
-            this.console.log(eventSource, eventDetails, eventData);
+            this.console.log(`[${new Date()}] Triggered by ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
             this.trigger(true)
           }));
         }
@@ -73,20 +73,27 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
     this.securitySystemState = Object.assign(this.securitySystemState, {
       mode: mode,
     })
+
+    this.console.log(`[${new Date()}] System ${this.securitySystemState.mode}. Monitoring ${monitoredDeviceIds.length} devices.`)
   }
   
   async disarmSecuritySystem(): Promise<void> {
+    // Reset system to not triggered and disarmed
+    this.securitySystemState = Object.assign(this.securitySystemState, {
+      mode: SecuritySystemMode.Disarmed,
+    })
+    this.trigger(false);
+
+    this.removeListeners()
+    this.console.log(`[${new Date()}] System ${SecuritySystemMode.Disarmed}`)
+  }
+
+  async removeListeners(): Promise<void> {
     // Remove all event listeners
     this.listeners.forEach((listener) => {
       listener.removeListener();
     })
     this.listeners = [];
-
-    // Reset system to not triggered and disarmed
-    this.trigger(false);
-    this.securitySystemState = Object.assign(this.securitySystemState, {
-      mode: SecuritySystemMode.Disarmed,
-    })
   }
 
   async trigger(triggered: boolean): Promise<void> {
