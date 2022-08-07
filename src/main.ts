@@ -62,8 +62,12 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
       device.interfaces.forEach((intf) => {
         if (supportedInterfaces.includes(intf as ScryptedInterface)) {
           this.listeners.push(device.listen({event: intf}, (eventSource: ScryptedDevice | undefined, eventDetails: EventDetails, eventData: any) => {
-            this.console.log(`[${new Date()}] Triggered by ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
-            this.trigger(true)
+            if (!!eventData) {
+              this.console.log(`[${new Date()}] Alarm triggered by ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
+              this.trigger(true)
+            } else {
+              this.console.log(`[${new Date()}] Alarm detected ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
+            }
           }));
         }
       })
