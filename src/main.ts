@@ -115,7 +115,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
         key: "home_devices",
         type: "device",
         multiple: true,
-        deviceFilter: `type === '${ScryptedDeviceType.Sensor}'`
+        deviceFilter: `interfaces.some(r => '${supportedInterfaces}'.includes(r))`
       },
       {
         title: "Away Mode Devices",
@@ -124,7 +124,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
         key: "away_devices",
         type: "device",
         multiple: true,
-        deviceFilter: `type === '${ScryptedDeviceType.Sensor}'`
+        deviceFilter: `interfaces.some(r => '${supportedInterfaces}'.includes(r))`
       },
       {
         title: "Night Mode Devices",
@@ -133,7 +133,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
         key: "night_devices",
         type: "device",
         multiple: true,
-        deviceFilter: `type === '${ScryptedDeviceType.Sensor}'`
+        deviceFilter: `interfaces.some(r => '${supportedInterfaces}'.includes(r))`
       }
     ]
   }

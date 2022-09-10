@@ -17,6 +17,13 @@ Monitor sensors in [Scrypted](https://github.com/koush/scrypted) and trigger a s
 ## Disarm A Triggered Alarm
 When the alarm is triggered, just set the mode to *Disarmed* to clear the alarm
 
+## Supported Devices
+Monitored devices must implement one or more of the following interfaces to be monitored:
+- EntrySensor
+- BinarySensor
+- MotionSensor
+- IntrusionSensor
+
 ---
 
 ---
