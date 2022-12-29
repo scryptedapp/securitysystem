@@ -64,7 +64,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
           this.listeners.push(device.listen({event: intf}, (eventSource: ScryptedDevice | undefined, eventDetails: EventDetails, eventData: any) => {
             if (!!eventData) {
               this.console.log(`[${new Date()}] Alarm triggered by ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
-              this.trigger(true)
+              this.trigger(eventSource, eventDetails, eventData);
             } else {
               this.console.log(`[${new Date()}] Alarm detected ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
             }
@@ -79,17 +79,19 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
     })
 
     this.console.log(`[${new Date()}] System ${this.securitySystemState.mode}. Monitoring ${monitoredDeviceIds.length} devices.`)
+    this.notifyDevices(this.securitySystemState.mode.replace(/([A-Z])/g, ' $1').trim(), `Monitoring ${monitoredDeviceIds.length} devices.`)
   }
   
   async disarmSecuritySystem(): Promise<void> {
     // Reset system to not triggered and disarmed
     this.securitySystemState = Object.assign(this.securitySystemState, {
       mode: SecuritySystemMode.Disarmed,
+      triggered: false,
     })
-    this.trigger(false);
 
     this.removeListeners()
     this.console.log(`[${new Date()}] System ${SecuritySystemMode.Disarmed}`)
+    this.notifyDevices("Disarmed", "System Disarmed")
   }
 
   async removeListeners(): Promise<void> {
@@ -100,9 +102,22 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
     this.listeners = [];
   }
 
-  async trigger(triggered: boolean): Promise<void> {
+  async trigger(eventSource: ScryptedDevice | undefined, eventDetails: EventDetails, eventData: any): Promise<void> {
     this.securitySystemState = Object.assign(this.securitySystemState, {
-      triggered
+      triggered: true,
+    });
+
+    this.notifyDevices(
+      eventSource?.name,
+      `${eventDetails.eventInterface?.replace(/([A-Z])/g, ' $1').trim()} detected ${eventDetails.property.replace(/([A-Z])/g, ' $1').toLowerCase().trim()}.`,
+    )
+  }
+
+  async notifyDevices(subtitle: string, body: string): Promise<void> {
+    const devices = this.storage.getItem("push_notify").split(",");
+    devices.forEach((deviceId) => {
+      const device = systemManager.getDeviceById(deviceId);
+      device.sendNotification("Security System", {subtitle, body});
     })
   }
 
@@ -134,6 +149,15 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
         type: "device",
         multiple: true,
         deviceFilter: `interfaces.some(r => '${supportedInterfaces}'.includes(r))`
+      },
+      {
+        title: "Push Notification Devices",
+        description: "Devices that will recieve a push notification.",
+        value: this.storage.getItem("push_notify") ? this.storage.getItem("push_notify").split(",") : "",
+        key: "push_notify",
+        type: "device",
+        multiple: true,
+        deviceFilter: `deviceFilter: interfaces.includes('${ScryptedInterface.Notifier}') && type === '${ScryptedDeviceType.Notifier}`
       }
     ]
   }
