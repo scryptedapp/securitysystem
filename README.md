@@ -5,8 +5,8 @@ Monitor sensors in [Scrypted](https://github.com/koush/scrypted) and trigger a s
 ## Getting Started
 1. Install the Security System plugin to Scrypted
 2. In *Settings/General* select devices that should be included for each system mode (see below for details on modes).
-3. Select *HomeKit* in *Integrations and Extensions* to publish the system in the Home app.
-3. In HomeKit, set the security system mode. Any sensors selected for that mode will be monitored and trigger an alarm when opened.
+3. Select *HomeKit* and/or *Alexa* in *Integrations and Extensions* to publish the system in the Home app.
+3. In HomeKit or Alexa, set the security system mode. Any sensors selected for that mode will be monitored and trigger an alarm when opened.
 
 ## System modes
 - **Disarmed** No sensors are monitored, alarm cannot be triggered.
@@ -22,7 +22,7 @@ Monitored devices must implement one or more of the following interfaces to be m
 - EntrySensor
 - BinarySensor
 - MotionSensor
-- IntrusionSensor
+- TamperSensor
 
 ---
 
