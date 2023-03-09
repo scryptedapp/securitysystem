@@ -1,11 +1,11 @@
-import sdk, { Device, DeviceInformation, ScryptedDeviceBase, ScryptedDeviceType, Settings, Setting, ScryptedInterface, SecuritySystem, SecuritySystemMode, SecuritySystemObstruction, SecuritySystemState, EventListenerOptions, EventListenerRegister, ScryptedDevice, EventDetails, EventListener } from '@scrypted/sdk';
-const { deviceManager, systemManager, log } = sdk;
+import sdk, { ScryptedDeviceBase, ScryptedDeviceType, Settings, Setting, ScryptedInterface, SecuritySystem, SecuritySystemMode, EventListenerRegister, ScryptedDevice, EventDetails, Notifier } from '@scrypted/sdk';
+const { deviceManager, systemManager } = sdk;
 
 const supportedInterfaces = [
   ScryptedInterface.EntrySensor,
   ScryptedInterface.BinarySensor,
   ScryptedInterface.MotionSensor,
-  ScryptedInterface.IntrusionSensor
+  ScryptedInterface.TamperSensor
 ]
 
 class SecuritySystemController extends ScryptedDeviceBase implements SecuritySystem, Settings {
@@ -40,7 +40,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
     }
     */
     // Different sets of monitored devices in home/away/night
-    let monitoredDeviceIds = []
+    let monitoredDeviceIds: string[] = [];
     switch(mode) {
       case SecuritySystemMode.HomeArmed:
         monitoredDeviceIds = this.storage.getItem("home_devices").split(",");
@@ -57,26 +57,33 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
 
     // Establish listeners for supported interfaces on monitored devices
     this.removeListeners();
-    monitoredDeviceIds.forEach((deviceId) => {
+    for (const deviceId of monitoredDeviceIds) {
       const device = systemManager.getDeviceById(deviceId);
-      device.interfaces.forEach((intf) => {
-        if (supportedInterfaces.includes(intf as ScryptedInterface)) {
-          this.listeners.push(device.listen({event: intf}, (eventSource: ScryptedDevice | undefined, eventDetails: EventDetails, eventData: any) => {
-            if (!!eventData) {
-              this.console.log(`[${new Date()}] Alarm triggered by ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
-              this.trigger(eventSource, eventDetails, eventData);
-            } else {
-              this.console.log(`[${new Date()}] Alarm detected ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
-            }
-          }));
-        }
-      })
-    });
+
+      if (!device)
+        continue;
+
+      const implimentedInterfaces = device.interfaces.filter((intf) => supportedInterfaces.includes(intf as ScryptedInterface));
+
+      if (implimentedInterfaces.length === 0) 
+        continue;
+
+      for (const intf of implimentedInterfaces) {
+        this.listeners.push(device.listen({event: intf, watch: true}, (eventSource: ScryptedDevice | undefined, eventDetails: EventDetails, eventData: any) => {
+          if (!!eventData) {
+            this.console.log(`[${new Date()}] Alarm triggered by ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
+            this.trigger(eventSource, eventDetails, eventData);
+          } else {
+            this.console.log(`[${new Date()}] Alarm detected ${eventDetails.eventInterface}=${eventData} on '${eventSource?.name}'`)
+          }
+        }));
+      }
+    }
 
     // Enable system
     this.securitySystemState = Object.assign(this.securitySystemState, {
       mode: mode,
-    })
+    });
 
     this.console.log(`[${new Date()}] System ${this.securitySystemState.mode}. Monitoring ${monitoredDeviceIds.length} devices.`)
     this.notifyDevices(this.securitySystemState.mode.replace(/([A-Z])/g, ' $1').trim(), `Monitoring ${monitoredDeviceIds.length} devices.`)
@@ -114,11 +121,14 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
   }
 
   async notifyDevices(subtitle: string, body: string): Promise<void> {
-    const devices = this.storage.getItem("push_notify").split(",");
-    devices.forEach((deviceId) => {
-      const device = systemManager.getDeviceById(deviceId);
-      device.sendNotification("Security System", {subtitle, body});
-    })
+    const devices = this.storage.getItem("push_notify")
+
+    if (devices && devices.length > 0) {
+      devices.split(",").forEach((deviceId) => {
+          const device = systemManager.getDeviceById<Notifier>(deviceId);
+          device.sendNotification("Security System", {subtitle, body});
+      })
+    }
   }
 
   async getSettings(): Promise<Setting[]> {
@@ -157,7 +167,7 @@ class SecuritySystemController extends ScryptedDeviceBase implements SecuritySys
         key: "push_notify",
         type: "device",
         multiple: true,
-        deviceFilter: `deviceFilter: interfaces.includes('${ScryptedInterface.Notifier}') && type === '${ScryptedDeviceType.Notifier}`
+        deviceFilter: `interfaces.includes('${ScryptedInterface.Notifier}')`
       }
     ]
   }
